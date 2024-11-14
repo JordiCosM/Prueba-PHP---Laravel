@@ -1,0 +1,68 @@
+@extends('layouts.app')
+
+@section('content')
+    <div class="container">
+        <h1>Gestor de tareas</h1>
+
+        <form id="taskform" action="{{ route('tasks.store') }}" method="POST">
+            @csrf
+            <input type="text" id="taskName" name="name" placeholder="Nueva tarea..." required>
+            @foreach ($categories as $category)
+                <label>
+                    <input type="checkbox" name="categories[]" value="{{ $category->id }}"> {{ $category->name }}
+                </label>
+            @endforeach
+            <button type="submit">Añadir</button>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarea</th>
+                    <th>Categorías</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id=taskList>
+                @foreach ($tasks as $task)
+                    @include('tasks.partials.task_row', ['task' => $task])
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        $('#taskForm').submit(function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: $(this).attr("action"),
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: (response) => {
+                    $('#taskList').html(response.html);
+                    // $('#taskList').append(response.html);
+                    $('#taskForm')[0].reset();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al guardar la tarea:', error);
+                }
+            });
+        });
+
+        function deleteTask(id) {
+            $.ajax({
+                url: '/tasks/' + id,
+                type: 'POST',
+                data: {
+                    _method: 'DELETE',
+                    _token: '{{ csrf_token() }}'
+                },
+                success: () => {
+                    $('#task-' + id).remove();
+                }
+            });
+        }
+    </script>
+@endsection
